@@ -6,6 +6,7 @@ from keras.models import Sequential
 from keras.layers import Dense, LSTM, InputLayer, Bidirectional, TimeDistributed, Embedding, Activation
 from keras.optimizers import Adam
 
+nltk.download('treebank')
 tagged_sentences = nltk.corpus.treebank.tagged_sents()
 print(tagged_sentences[0])
 print("Tagged sentences: ", len(tagged_sentences))
@@ -16,9 +17,9 @@ print("Tagged words:", len(nltk.corpus.treebank.tagged_words()))
 
 sentences, sentence_tags =[], [] 
 for tagged_sentence in tagged_sentences:
-    sentence, tags = zip(*tagged_sentence)
-    sentences.append(np.array(sentence))
-    sentence_tags.append(np.array(tags))
+	sentence, tags = zip(*tagged_sentence)
+	sentences.append(np.array(sentence))
+	sentence_tags.append(np.array(tags))
 # Let's see how a sequence looks
 
 print(sentences[5])
@@ -32,15 +33,15 @@ print(sentence_tags[5])
 #  'NNP' 'NNS' ',' 'VBD' 'VBG' 'NN' 'IN' 'PRP$' 'NN' 'NN' 'NNS' 'IN' 'CD'
 #  '.']
 
-def to_categorical(sequences, categories):
-    cat_sequences = []
-    for s in sequences:
-        cats = []
-        for item in s:
-            cats.append(np.zeros(categories))
-            cats[-1][item] = 1.0
-        cat_sequences.append(cats)
-    return np.array(cat_sequences)
+def label_to_categorical(sequences, categories):
+	cat_sequences = []
+	for s in sequences:
+		cats = []
+		for item in s:
+			cats.append(np.zeros(categories))
+			cats[-1][item] = 1.0
+			cat_sequences.append(cats)
+	return np.array(cat_sequences)
 
 (train_sentences, 
 test_sentences, 
@@ -50,12 +51,12 @@ test_tags) = train_test_split(sentences, sentence_tags, test_size=0.2)
 words, tags = set([]), set([])
 
 for s in train_sentences:
-    for w in s:
-        words.add(w.lower())
+	for w in s:
+		words.add(w.lower())
 
 for ts in train_tags:
-    for t in ts:
-        tags.add(t)
+	for t in ts:
+		tags.add(t)
 
 word2index = {w: i + 2 for i, w in enumerate(list(words))}
 word2index['-PAD-'] = 0  # The special value used for padding
@@ -65,35 +66,35 @@ tag2index['-PAD-'] = 0  # The special value used to padding
 
 train_sentences_X, test_sentences_X, train_tags_y, test_tags_y = [], [], [], []
 for s in train_sentences:
-    s_int = []
+	s_int = []
 
 for w in s:
-    try:
-       s_int.append(word2index[w.lower()])
-    except KeyError:
-        s_int.append(word2index['-OOV-'])
+	try:
+	   s_int.append(word2index[w.lower()])
+	except KeyError:
+		s_int.append(word2index['-OOV-'])
 train_sentences_X.append(s_int)
 
 for s in test_sentences:
-    s_int = []
+	s_int = []
 
 for w in s:
-    try:
-        s_int.append(word2index[w.lower()])
-    except KeyError:
-        s_int.append(word2index['-OOV-'])
+	try:
+		s_int.append(word2index[w.lower()])
+	except KeyError:
+		s_int.append(word2index['-OOV-'])
 test_sentences_X.append(s_int)
 
 for s in train_tags:
-    train_tags_y.append([tag2index[t] for t in s])
+	train_tags_y.append([tag2index[t] for t in s])
 
 for s in test_tags:
-    test_tags_y.append([tag2index[t] for t in s])
+	test_tags_y.append([tag2index[t] for t in s])
 
-print(train_sentences_X[0])
-print(test_sentences_X[0])
-print(train_tags_y[0])
-print(test_tags_y[0])
+# print(train_sentences_X[0])
+# print(test_sentences_X[0])
+# print(train_tags_y[0])
+# print(test_tags_y[0])
 # [2385, 9167, 860, 4989, 6805, 6349, 9078, 3938, 862, 1092, 4799, 860, 1198, 1131, 879, 5014, 7870, 704, 4415, 8049, 9444, 8175, 8172, 10058, 10034, 9890, 1516, 8311, 7870, 1489, 7967, 6458, 8859, 9720, 6754, 5402, 9254, 2663]
 # [3829, 3347, 1, 8311, 6240, 982, 7936, 1, 3552, 4558, 1, 9007, 8175, 8172, 637, 4517, 7392, 3124, 860, 5416, 920, 3301, 6240, 1205, 5282, 6683, 9890, 758, 4415, 1, 6240, 3386, 9072, 3219, 6240, 9157, 5611, 6240, 6969, 4517, 2956, 175, 2663]
 # [11, 35, 39, 3, 7, 9, 20, 42, 42, 3, 35, 39, 35, 35, 22, 7, 10, 16, 32, 35, 31, 17, 3, 11, 42, 7, 9, 3, 10, 16, 6, 25, 12, 11, 42, 17, 6, 44]
@@ -106,11 +107,22 @@ train_sentences_X = pad_sequences(train_sentences_X, maxlen=MAX_LENGTH, padding=
 test_sentences_X = pad_sequences(test_sentences_X, maxlen=MAX_LENGTH, padding='post')
 train_tags_y = pad_sequences(train_tags_y, maxlen=MAX_LENGTH, padding='post')
 test_tags_y = pad_sequences(test_tags_y, maxlen=MAX_LENGTH, padding='post')
-print(train_sentences_X[0])
-print(test_sentences_X[0])
+# print(train_sentences_X[0])
+# print(test_sentences_X[0])
 print('##################')
-print(train_tags_y[0])
-print(test_tags_y[0])
+# print(train_tags_y[0])
+# print(test_tags_y[0])
+
+cat_train_tags_y = label_to_categorical(train_tags_y, len(tag2index))
+for x in cat_train_tags_y[0]:
+	print(x)
+
+print(cat_train_tags_y)
+print(type(cat_train_tags_y[0]))
+
+# with open('from_web', 'w', encoding='utf-8') as f:
+# 	for x in abbbb:
+# 		f.write(str(x)+'\n')
 
 model = Sequential()
 model.add(InputLayer(input_shape=(MAX_LENGTH, )))
@@ -136,6 +148,6 @@ model.summary()
 # Non-trainable params: 0
 # _________________________________________________________________
 
-model.fit(train_sentences_X, to_categorical(train_tags_y, len(tag2index)), batch_size=128, epochs=10, validation_split=0.2)
-scores = model.evaluate(test_sentences_X, to_categorical(test_tags_y, len(tag2index)))
+model.fit(train_sentences_X, abbbb, batch_size=128, epochs=10, validation_split=0.2)
+scores = model.evaluate(test_sentences_X, abbbb)
 print('Accuracy: {}'.format(scores[1*100]))   # acc: 99.09751977804825

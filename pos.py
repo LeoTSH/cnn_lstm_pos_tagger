@@ -9,15 +9,15 @@ from keras.utils import to_categorical
 from keras.optimizers import Adam
 from keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, InputLayer, Bidirectional, TimeDistributed, Activation
 
-def to_categorical(sequences, categories):
-    cat_sequences = []
-    for s in sequences:
-        cats = []
-        for item in s:
-            cats.append(np.zeros(categories))
-            cats[-1][item] = 1.0
-        cat_sequences.append(cats)
-    return np.array(cat_sequences)
+# def to_categorical(sequences, categories):
+#     cat_sequences = []
+#     for s in sequences:
+#         cats = []
+#         for item in s:
+#             cats.append(np.zeros(categories))
+#             cats[-1][item] = 1.0
+#         cat_sequences.append(cats)
+#     return np.array(cat_sequences)
 
 def chunk_seq(seq, chunk_len):
     chunked_seq = []
@@ -99,27 +99,29 @@ print('Number of unique labels:', no_classes)
 seq_int = []
 for seq in sequences:
     seq_int.append([vocab_to_int[word] for word in seq.split()])
-# print(seq_int[:10])
+print('Sameple sequence:', seq_int[10])
+
+# Tokenize output labels
+lab_int = []
+for lab in y_labels:
+    lab_int.append([label_to_int[word] for word in lab.split()])
+print('Sample label:', lab_int[10])
 
 # Check max seq length
 seq_len = Counter([len(seq) for seq in seq_int])
 max_seq_len = max(seq_len)
 print("Maximum sequence length: {}".format(max(seq_len)))
 
-# Tokenize output labels
-lab_int = []
-for lab in y_labels:
-    lab_int.append([label_to_int[word] for word in lab.split()])
-# print(lab_int[:10])
-
 # encoded_labels = np.array(lab_int)
 # print('Encoded labels:', encoded_labels[:10])
 # encoded_labels = to_categorical(y=encoded_labels, num_classes=4)
 # print(encoded_labels[:10])
 
-encoded_labels = to_categorical(lab_int, no_classes)
+encoded_labels = [to_categorical(x, no_classes) for x in lab_int]
+print('Encoded label:', encoded_labels[10])
 # print(encoded_labels[-1])
-# Pad sequences to 5 or sequence length, post padding
+
+# Pad sequences to 15 or sequence length, post padding
 features = np.zeros((len(seq_int), 15), dtype=int)
 
 for i, row in enumerate(seq_int):
@@ -149,18 +151,20 @@ val_x, test_x = left_over_x[:val_test_index], left_over_x[val_test_index:]
 val_y, test_y = left_over_y[:val_test_index], left_over_y[val_test_index:]
 
 ## print out the shapes of your resultant feature data
-print('Training Dataset: \t{}'.format(train_x.shape), train_y.shape)
-print('Validation Dataset: \t{}'.format(val_x.shape), val_y.shape)
-print('Testing Dataset: \t{}'.format(test_x.shape), test_y.shape)
+# print('Training Dataset: \t{}'.format(train_x.shape), train_y.shape)
+# print('Validation Dataset: \t{}'.format(val_x.shape), val_y.shape)
+# print('Testing Dataset: \t{}'.format(test_x.shape), test_y.shape)
+print('Training Dataset: \t{}'.format(train_x.shape))
+print('Validation Dataset: \t{}'.format(val_x.shape))
+print('Testing Dataset: \t{}'.format(test_x.shape))
+
 
 model = Sequential()
 model.add(Embedding(input_dim=unique_vocab, output_dim=128, input_length=max_seq_len))
-# model.add(LSTM(units=256, return_sequences=True))
-# model.add(Dense(no_classes, activation='softmax'))
-# model.add(Bidirectional(LSTM(256, return_sequences=True)))
-# model.add(TimeDistributed(Dense(no_classes, activation='softmax')))
+model.add(Bidirectional(LSTM(256, return_sequences=True)))
+model.add(TimeDistributed(Dense(no_classes, activation='softmax')))
 # model.add(Activation('softmax')) 
-model.compile(loss='sparse_categorical_crossentropy', optimizer=Adam(0.001), metrics=['accuracy'])
+model.compile(loss='categorical_crossentropy', optimizer=Adam(0.001), metrics=['accuracy'])
 model.summary()
 
 model.fit(x=train_x, y=train_y, batch_size=64, epochs=10, validation_split=(val_x, val_y))
