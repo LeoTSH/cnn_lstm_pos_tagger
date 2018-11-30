@@ -3,3 +3,4 @@ __pycache__
 .vscode
 test.py
 *.csv
+*.h5
