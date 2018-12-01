@@ -11,7 +11,7 @@ from keras.models import Sequential
 from keras.utils import to_categorical
 from keras.preprocessing.sequence import pad_sequences
 from keras.optimizers import Adam
-from keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, InputLayer, Bidirectional, TimeDistributed, Activation
+from keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, InputLayer, Bidirectional, TimeDistributed, Activation, Dropout
 
 def chunk_seq(seq, chunk_len):
     chunked_seq = []
@@ -33,14 +33,15 @@ def get_labels(seq):
 
 # Set model parameters
 max_seq_len = 30
-no_filters_1 = 32
-no_filters_2 = 64
+drop_prob = 0.2
+no_filters_1 = 64
+no_filters_2 = 128
 kernel_1 = 3
-kernel_2 = 3
-lstm_hidden = 256
-embed_dim = 128
+kernel_2 = 5
+lstm_hidden = 512
+embed_dim = 300
 adam_lr = 0.001
-batch_size = 64
+batch_size = 32
 epochs = 2
 valid_split = 0.3
 
@@ -170,8 +171,11 @@ print('Testing Dataset: \t\t{}'.format(test_x.shape), len(test_y))
 model = Sequential()
 model.add(Embedding(input_dim=unique_vocab, output_dim=embed_dim, input_length=max_seq_len))
 model.add(Conv1D(filters=no_filters_1, kernel_size=kernel_1, padding='SAME'))
+model.add(Dropout(rate=drop_prob, seed=50))
 model.add(Conv1D(filters=no_filters_2, kernel_size=kernel_2, padding="SAME"))
+model.add(Dropout(rate=drop_prob, seed=50))
 model.add(Bidirectional(LSTM(lstm_hidden, return_sequences=True)))
+model.add(Dropout(rate=drop_prob, seed=50))
 model.add(TimeDistributed(Dense(no_classes, activation='softmax')))
 model.compile(loss='categorical_crossentropy', optimizer=Adam(adam_lr), metrics=['accuracy'])#, ignore_class_accuracy(0)])
 model.summary()
