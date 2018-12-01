@@ -1,4 +1,5 @@
 import keras, string, random, datetime, numpy as np, matplotlib.pyplot as plt
+import tensorflow as tf
 from string import punctuation
 from collections import Counter
 from sklearn.metrics import confusion_matrix
@@ -8,6 +9,7 @@ K.tensorflow_backend._get_available_gpus()
 from keras.callbacks import TensorBoard
 from keras.models import Sequential
 from keras.utils import to_categorical
+from keras.preprocessing.sequence import pad_sequences
 from keras.optimizers import Adam
 from keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, InputLayer, Bidirectional, TimeDistributed, Activation
 
@@ -29,32 +31,28 @@ def get_labels(seq):
             labels_seq.append('<na>')
     return labels_seq
 
-def ignore_class_accuracy(to_ignore=0):
-    def ignore_accuracy(y_true, y_pred):
-        y_true_class = K.argmax(y_true, axis=-1)
-        y_pred_class = K.argmax(y_pred, axis=-1)
- 
-        ignore_mask = K.cast(K.not_equal(y_pred_class, to_ignore), 'int32')
-        matches = K.cast(K.equal(y_true_class, y_pred_class), 'int32') * ignore_mask
-        accuracy = K.sum(matches) / K.maximum(K.sum(ignore_mask), 1)
-        return accuracy
-    return ignore_accuracy
+# Set model parameters
+max_seq_len = 30
+no_filters_1 = 32
+no_filters_2 = 64
+kernel_1 = 3
+kernel_2 = 3
+lstm_hidden = 256
+embed_dim = 128
+adam_lr = 0.001
+batch_size = 64
+epochs = 2
+valid_split = 0.3
 
-def logits_to_tokens(sequences, index):
-    token_sequences = []
-    for categorical_sequence in sequences:
-        token_sequence = []
-        for categorical in categorical_sequence:
-            token_sequence.append(index[np.argmax(categorical)]) 
-        token_sequences.append(token_sequence) 
-    return token_sequences
-
+# Set misc parameters
 current = datetime.datetime.now()
-date = current.strftime('%dd-%%mm')
-tb = TensorBoard(log_dir='./tf_logs/{}'.format(current), batch_size=64, write_graph=True, histogram_freq=0)
-table = str.maketrans('', '', punctuation)
-max_seq_len = 20
+date = current.strftime('%b-%d')
+tb = TensorBoard(log_dir='./tf_logs/{}'.format(date), batch_size=64, write_graph=True, histogram_freq=0)
 
+# Look-up table to remove punctuations from data
+table = str.maketrans('', '', punctuation)
+
+# Load and process input/label data
 data = open('./data/processed/ted_data', 'r', encoding='utf-8').read()
 data = data.lower()
 data_split = data.split('\n')
@@ -69,13 +67,14 @@ sequences = [' '.join(seq) for seq in x]
 process_labels = [get_labels(seq) for seq in sequences]
 process_labels = [' '.join(seq) for seq in process_labels]
 
+# Remove punctuations
 sequences = [seq.translate(table) for seq in sequences]
 
-with open('processed_input', 'w') as f:
+with open('./processed_input', 'w', encoding='utf-8') as f:
     for x in sequences:
         f.write(x+'\n')
 
-with open('processed_labels', 'w') as f:
+with open('./processed_labels', 'w', encoding='utf-8') as f:
     for x in process_labels:
         f.write(x+'\n')
 
@@ -83,10 +82,16 @@ with open('processed_labels', 'w') as f:
 print('Number of sequences: \t{}'.format(len(sequences)))
 print('Number of labels: \t{}'.format(len(process_labels)))
 
-y_labels = open('./processed_labels', 'r').read()
+y_labels = open('./processed_labels', 'r', encoding='utf-8').read()
 y_labels = y_labels.split('\n')
+y_labels = y_labels[:-1]
 all_labels = ' '.join(y_labels)
 labels_tag = all_labels.split()
+
+split = int(0.8*len(all_labels))
+test_y_counts = all_labels[split:]
+test_y_counts_split = test_y_counts.split()
+counts = Counter(test_y_counts_split)
 
 # Build words vocab
 all_data = ' '.join(sequences)
@@ -117,58 +122,60 @@ print(label_to_int)
 seq_int = []
 for seq in sequences:
     seq_int.append([vocab_to_int[word] for word in seq.split()])
-print('Sample sequence:', sequences[10])
-print('Sample sequence:', seq_int[10])
+
+# Pad input sequences
+pad_seq = pad_sequences(sequences=seq_int, maxlen=max_seq_len, padding='post', value=0)
+
+# Check sample sequence
+print('Sample sequence:', sequences[-1])
+print('Sample sequence:', pad_seq[-1])
 
 # Tokenize output labels
 lab_int = []
 for lab in y_labels:
     lab_int.append([label_to_int[word] for word in lab.split()])
-print('Sample label:', lab_int[10])
+
+# Pad input labels
+pad_labels = pad_sequences(sequences=lab_int, maxlen=max_seq_len, padding='post', value=0)
+encoded_labels = [to_categorical(i, num_classes=no_classes) for i in pad_labels]
+
+# Check sample label
+print('Sample label:', pad_labels[-1])
+print('Encoded label', encoded_labels[-1])
 
 # Check max seq length
 print("Maximum sequence length: {}".format(max_seq_len))
 
-# Pad sequences to max sequence length, post padding
-features = np.zeros((len(seq_int), max_seq_len), dtype=int)
+# Check that all sequences and labels are at max sequence length 
+assert len(pad_seq)==len(seq_int)
+assert len(pad_seq[0])==max_seq_len
 
-for i, row in enumerate(seq_int):
-    features[i, :len(row)] = np.array(row)[:max_seq_len]
+assert len(pad_labels)==len(lab_int)
+assert len(pad_labels[0])==max_seq_len
+print('Sequence and labels length check passed!')
 
-# Check that all sequences at at max sequence length 
-assert len(features)==len(seq_int)
-assert len(features[0])==max_seq_len
-
-encoded_labels = [to_categorical(i, num_classes=no_classes) for i in lab_int]
-# print(encoded_labels[10])
-
+# Split train and label dataset
 train_test_split_frac = 0.8
-split_index = int(0.8*len(features))
+split_index = int(0.8*len(pad_seq))
 
 # Split data into training, validation, and test data (features and labels, x and y)
-train_x, left_over_x = features[:split_index], features[split_index:]
-train_y, left_over_y = encoded_labels[:split_index], encoded_labels[split_index:]
-
-val_test_index = int(0.5*len(left_over_x))
-print('Validation/Test amount: \t{}'.format(val_test_index))
-
-val_x, test_x = left_over_x[:val_test_index], left_over_x[val_test_index:]
-val_y, test_y = left_over_y[:val_test_index], left_over_y[val_test_index:]
+train_val_x, test_x = pad_seq[:split_index], pad_seq[split_index:]
+train_val_y, test_y = encoded_labels[:split_index], encoded_labels[split_index:]
 
 # print out the shapes of your resultant feature data
-print('Training Dataset: \t{}'.format(train_x.shape))
-print('Validation Dataset: \t{}'.format(val_x.shape))
-print('Testing Dataset: \t{}'.format(test_x.shape))
+print('Training/Validation Dataset: \t{}'.format(train_val_x.shape), len(train_val_y))
+print('Testing Dataset: \t\t{}'.format(test_x.shape), len(test_y))
 
+# Model code
 model = Sequential()
-model.add(Embedding(input_dim=unique_vocab, output_dim=128, input_length=max_seq_len))
-model.add(Conv1D(filters=64, kernel_size=3, padding='SAME'))
-model.add(Conv1D(filters=128, kernel_size=3, padding="SAME"))
-model.add(Bidirectional(LSTM(256, return_sequences=True)))
+model.add(Embedding(input_dim=unique_vocab, output_dim=embed_dim, input_length=max_seq_len))
+model.add(Conv1D(filters=no_filters_1, kernel_size=kernel_1, padding='SAME'))
+model.add(Conv1D(filters=no_filters_2, kernel_size=kernel_2, padding="SAME"))
+model.add(Bidirectional(LSTM(lstm_hidden, return_sequences=True)))
 model.add(TimeDistributed(Dense(no_classes, activation='softmax')))
-model.compile(loss='categorical_crossentropy', optimizer=Adam(0.001), metrics=['accuracy'])#, ignore_class_accuracy(0)])
+model.compile(loss='categorical_crossentropy', optimizer=Adam(adam_lr), metrics=['accuracy'])#, ignore_class_accuracy(0)])
 model.summary()
-model.fit(x=train_x, y=np.array(train_y), batch_size=64, epochs=1, validation_data=(val_x, np.array(val_y)),
+model.fit(x=train_val_x, y=np.array(train_val_y), batch_size=batch_size, epochs=epochs, validation_split=valid_split, steps_per_epoch=None, validation_steps=None,
           shuffle=True, verbose=1, callbacks=[tb])
 
 # print('Saving Model')
@@ -178,8 +185,9 @@ model.fit(x=train_x, y=np.array(train_y), batch_size=64, epochs=1, validation_da
 # scores = model.evaluate(x=test_x, y=np.array(test_y), verbose=1)
 # print('Accuracy: {}'.format(scores[1] * 100))
 
+# Make prediction on a single sequence
 # Sequence to predict
-test_data = test_x[498]
+test_data = test_x[255]
 pred_x_seq = []
 for x in test_data:
     for value, index in vocab_to_int.items():
@@ -206,21 +214,17 @@ print(' '.join(pred_x_seq))
 print('Prediction output:')
 print(' '.join(pred_y_seq))
 
+# # WIP for CM and CR
 for_report = model.predict(test_x)
-test_y = np.array(test_y)
+out_pred = [np.argmax(x, axis=1) for x in for_report]
+out_pred = np.concatenate(out_pred, axis=0)
 
-l = []
-for x in test_y:
-    b = []
-    for s in x:
-        b.append(s.argmax(axis=1))
-    l.append(b)
+y_ = [np.argmax(x, axis=1) for x in test_y]
+y_ = np.concatenate(y_, axis=0)
 
-print(for_report.argmax(axis=0))
-print(l)
-# cr = classification_report(y_true=np.argmax(test_y, axis=1), y_pred=np.argmax(for_report, axis=1))
-# cm = confusion_matrix(y_true=np.array(test_y).argmax(axis=1), y_pred=np.argmax(for_report, axis=1))
-# print('Classification Report:')
-# print(cr)
-# print('Confusion Matrix:')
-# print(cm)
+print('Test dataset distribution:', counts)
+cm = confusion_matrix(y_true=y_, y_pred=out_pred)
+print(cm)
+
+cr = classification_report(y_true=y_, y_pred=out_pred)
+print(cr)
