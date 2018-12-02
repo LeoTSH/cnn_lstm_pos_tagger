@@ -1,17 +1,55 @@
-import keras, string, random, datetime, numpy as np, matplotlib.pyplot as plt
-import tensorflow as tf
+import keras, string, itertools, random, datetime, numpy as np, matplotlib.pyplot as plt, tensorflow as tf
 from string import punctuation
 from collections import Counter
 from sklearn.metrics import confusion_matrix
 from sklearn.metrics import classification_report
 from keras import backend as K
 K.tensorflow_backend._get_available_gpus()
-from keras.callbacks import TensorBoard
+from keras.callbacks import TensorBoard, EarlyStopping
 from keras.models import Sequential
 from keras.utils import to_categorical
 from keras.preprocessing.sequence import pad_sequences
 from keras.optimizers import Adam
-from keras.layers import Embedding, Conv1D, MaxPooling1D, Flatten, Dense, Dropout, LSTM, InputLayer, Bidirectional, TimeDistributed, Activation, Dropout
+from keras.layers import Embedding, Conv1D, Flatten, Dense, Dropout, LSTM, Bidirectional, TimeDistributed, Dropout
+
+def plot_confusion_matrix(cm, classes, normalize=False, title='Confusion matrix', cmap=plt.cm.Blues):
+	'''
+	Description: Prints and plots the confusion matrix.	Normalization can be applied by setting `normalize=True`
+
+	Args:
+		- cm: Confusion Matrix
+		- classes: Names of classes
+		- normalize: Whether to or to not normal values in Confusion Matrix
+		- cmap: Plot color	
+	'''
+
+	# Check if normalize is true or false
+	if normalize:
+		cm = cm.astype('float') / cm.sum(axis=1)[:, np.newaxis]
+		print("Normalized confusion matrix")
+	else:
+		print('Confusion matrix, without normalization')
+
+	print(cm)
+
+	# Format axis and plot Confusion Matrix
+	plt.imshow(cm, interpolation='nearest', cmap=cmap)
+	plt.title(title)
+	plt.colorbar()
+	tick_marks = np.arange(len(classes))
+	plt.xticks(tick_marks, classes, rotation=45)
+	plt.yticks(tick_marks, classes)
+
+	fmt = '.2f' if normalize else 'd'
+	thresh = cm.max() / 2.
+	for i, j in itertools.product(range(cm.shape[0]), range(cm.shape[1])):
+		plt.text(j, i, format(cm[i, j], fmt),
+				 horizontalalignment="center",
+				 color="white" if cm[i, j] > thresh else "black")
+
+	plt.ylabel('True label')
+	plt.xlabel('Predicted label')
+	plt.tight_layout()
 
 def chunk_seq(seq, chunk_len):
     chunked_seq = []
@@ -32,6 +70,9 @@ def get_labels(seq):
     return labels_seq
 
 # Set model parameters
+name_1 = 'lstm'
+name_2 = 'cnn-lstm'
+model_name = name_2
 max_seq_len = 30
 drop_prob = 0.2
 no_filters_1 = 64
@@ -39,16 +80,18 @@ no_filters_2 = 128
 kernel_1 = 3
 kernel_2 = 5
 lstm_hidden = 512
-embed_dim = 300
+embed_dim = 256
 adam_lr = 0.001
 batch_size = 32
-epochs = 2
+epochs = 1
 valid_split = 0.3
 
 # Set misc parameters
 current = datetime.datetime.now()
 date = current.strftime('%b-%d')
-tb = TensorBoard(log_dir='./tf_logs/{}'.format(date), batch_size=64, write_graph=True, histogram_freq=0)
+tensor_b = TensorBoard(log_dir='./tf_logs/{}'.format(model_name), batch_size=batch_size, write_graph=True, histogram_freq=0)
+early_s = EarlyStopping(monitor='val_loss')
+class_names = ['Pad', 'NA', 'Comma', 'Period']
 
 # Look-up table to remove punctuations from data
 table = str.maketrans('', '', punctuation)
@@ -179,8 +222,8 @@ model.add(Dropout(rate=drop_prob, seed=50))
 model.add(TimeDistributed(Dense(no_classes, activation='softmax')))
 model.compile(loss='categorical_crossentropy', optimizer=Adam(adam_lr), metrics=['accuracy'])#, ignore_class_accuracy(0)])
 model.summary()
-model.fit(x=train_val_x, y=np.array(train_val_y), batch_size=batch_size, epochs=epochs, validation_split=valid_split, steps_per_epoch=None, validation_steps=None,
-          shuffle=True, verbose=1, callbacks=[tb])
+model.fit(x=train_val_x, y=np.array(train_val_y), batch_size=64, epochs=epochs, validation_split=valid_split, steps_per_epoch=None, validation_steps=None,
+          shuffle=True, verbose=1, callbacks=[tensor_b, early_s])
 
 # print('Saving Model')
 # model.save('model.h5')
@@ -213,10 +256,24 @@ for x in pred_y:
             if y == index:
                 pred_y_seq.append(value)
 
+combined = []
+for i in range(len(pred_x_seq)):
+    if pred_y_seq[i] == '<comma>':
+        combined.append(str(pred_x_seq)+',')
+    elif pred_y_seq[i] == '<period>':
+        combined.append(str(pred_x_seq)+'.')
+    else:
+        combined.append(str(pred_x_seq[i]))
+
+combined = [word.capitalize() for word in combined if word.endswith('.')]
+combined = ' '.join(combined)
+
 print('Prediction sequence:')            
 print(' '.join(pred_x_seq))
 print('Prediction output:')
 print(' '.join(pred_y_seq))
+print('Combined sequence:')
+print(combined)
 
 # # WIP for CM and CR
 for_report = model.predict(test_x)
@@ -232,3 +289,7 @@ print(cm)
 
 cr = classification_report(y_true=y_, y_pred=out_pred)
 print(cr)
+
+plt.figure()
+plot_confusion_matrix(cm, classes=class_names, normalize=True, title='Normalized Confusion Matrix')
+plt.show()
