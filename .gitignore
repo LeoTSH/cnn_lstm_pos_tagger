@@ -4,3 +4,4 @@ __pycache__
 test.py
 *.csv
 *.h5
+tf_log/*
