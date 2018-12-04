@@ -5,3 +5,4 @@ test.py
 *.csv
 *.h5
 tf_log/*
+/data/processed/train.word.txt
