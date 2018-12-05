@@ -6,3 +6,4 @@ test.py
 *.h5
 tf_log/*
 /data/processed/train.word.txt
+/data/processed/train.label.txt
