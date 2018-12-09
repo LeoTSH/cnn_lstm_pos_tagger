@@ -1,15 +1,10 @@
-## Data Visualization Project
+# Implementation of a CNN+LSTM PoS tagger to restore/prediction punctuations in sentences
 
-# Summary:
-Goal of this project is to create a visualization/infographics to relationships that influenced the survival rate of the passengers.
-After analyzing the data, variables Passenger Class, Embarked Location and Sex affects survival rate with Passenger Class having to lowest effect.
-Combination of the variables have a greater effect on survivability.
+## Summary:
+Using a CNN to extract word/character information and feeding them into a LSTM to make better predictions
 
-* Overwhelming likely to survive if you are a female
-* More likely to survive if you are from Cherbourg
-* More likely to survive if you are a First Class Passenger
-* Combination of the mentioned variables seem to provide the most effect
-
+`Input`: Sentence without punctuation  
+`Output`: Prediction if the words in the sentence should contain punctuations and what they should be
 
 # Design:
 * Updated survival rates on all charts to percentages (Ration * 100)
