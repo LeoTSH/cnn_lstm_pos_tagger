@@ -9,3 +9,4 @@ tf_log/*
 /data/processed/train.label.txt
 *.vec
 glove.6B.300d.txt
+test.ipynb
