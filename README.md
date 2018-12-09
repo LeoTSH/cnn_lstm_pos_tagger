@@ -44,6 +44,6 @@ Below are additional packages needed to run the code.
 
 ### Results:
 #### CNN+LSTM
-[Confusion matrix](results/ted/glove-cnn-lstm cm.jpg)
+[Confusion matrix](results/ted/glove-cnn-lstm-cm.jpg)
 
 # TODO 
