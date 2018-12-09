@@ -32,3 +32,16 @@ Tensorflow-gpu_1.12.0: To train model on GPU
 * `src`: Contains the source files for the project
 * `tf_logs`: Contains the training log files which can be viewed using tensorboard `tensorbard --logdir=./`
 * `PoS Tagger`: Notebook containing all codes required to run the project. Further descriptions are provided within to explain each code block
+
+## Usage:
+As a prerequisite, please kindly ensure that [Anaconda](https://www.anaconda.com/download/) has been installed.
+
+1. Clone the repo
+2. Create the Conda environment using the yml file: conda env create -f environment.yml
+3. Activate the Conda environment: (source or conda) activate cnn
+4. Navigate to the src folder
+5. Run any of the script files to train the model  
+
+## Results:
+
+# TODO 
