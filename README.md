@@ -21,12 +21,17 @@ Below are additional packages needed to run the code.
 
 ### Project folder/files structure:
 ```
-├───data
-│   ├───processed
-├───results
-│   ├───mge
-│   └───ted
-└───tf_logs
+├── data
+│   ├── embeddings
+│   ├── processed
+│   └── raw
+├── PoS Tagger MGE.ipynb
+├── PoS Tagger Ted.ipynb
+├── README.md
+├── results
+│   ├── mge
+│   └── ted
+└── tf_logs
 ```
 * `data`: Contains all (Raw and processed) data used for the model. Sub folder: **processed** holds the Ted Talks dataset (And its processed formats) to be used (Due to licensing, only the Ted Talks dataset will be available)
 * `results`: Contains the screenshots of the model results (Pure LSTM, CNN+LSTM) performed on different datasets
@@ -42,9 +47,15 @@ Below are additional packages needed to run the code.
 5. Run the code blocks to train the model. make predictions and, evaluate the metrics
 
 ### Results:
+
 ##### CNN+LSTM
 ![Confusion matrix](results/ted/glove-cnn-lstm-cm.jpg)
 ![Classification report](results/ted/glove-cnn-lstm-cr.jpg)
 
 ##### LSTM
-# TODO
+![Confusion matrix](results/ted/glove-lstm-cm.png)
+![Classification report](results/ted/glove-lstm-cr.png)
+
+### Further Updates:
+
+* Current CNN+LSTM model performs worse than a pure LSTM overall hence, further research will be necessary to refine it
