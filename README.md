@@ -7,7 +7,7 @@ Using a CNN to extract word/character information and feeding them into a LSTM t
 `Output`: Prediction if the words in the sentence should contain punctuations and what they should be
 
 ### Requirements:
-As a prerequisite, please kindly ensure that the [Anaconda] package(https://www.anaconda.com/download/) has been installed.
+As a prerequisite, please kindly ensure that the [Anaconda](https://www.anaconda.com/download/) package has been installed.
 
 Below are additional packages needed to run the code.
 
