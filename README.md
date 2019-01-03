@@ -38,6 +38,8 @@ Below are additional packages needed to run the code.
 * `tf_logs`: Contains the training log files which can be viewed using tensorboard `tensorbard --logdir=./`
 * `PoS Tagger`: Notebook containing all codes required to run the project. Further descriptions are provided within to explain each code block
 
+### Model architecture:
+![model architecture](./images/model.png)
 ### Usage:
 
 1. Clone the repo
