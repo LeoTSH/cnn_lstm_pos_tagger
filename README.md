@@ -49,13 +49,13 @@ Below are additional packages needed to run the code.
 ### Results:
 
 ##### CNN+LSTM
-![Confusion matrix](images/glove_cnn_lstm_cm)
-![Classification report](images/glove_cnn_lstm_cr)
+![Confusion matrix](./images/glove_cnn_lstm_cm.jpg)
+![Classification report](./images/glove_cnn_lstm_cr.jpg)
 
 ##### LSTM
-![Confusion matrix](results/ted/glove-lstm-cm.png)
-![Classification report](results/ted/glove-lstm-cr.png)
+![Confusion matrix](./images/glove_lstm_cm.jpg)
+![Classification report](./images/glove_lstm_cr.jpg)
 
 ### Further Updates:
 
-* Current CNN+LSTM model performs worse than a pure LSTM overall hence, further research will be necessary to refine it
+* Fleshing out readme to make it as detailed as possible
