@@ -1,7 +1,7 @@
-## Implementation of a CNN+LSTM PoS tagger to restore/prediction punctuations in sentences
+## Implementation of a CNN+LSTM PoS tagger to predict punctuations in sentences
 
 ### Summary:
-Using a CNN to extract word/character information and feeding them into a LSTM to make better predictions
+Using a CNN to extract word information and feeding them into a Bi-LSTM to make improve predictions
 
 `Input`: Sentence without punctuation  
 `Output`: Prediction if the words in the sentence should contain punctuations and what they should be
