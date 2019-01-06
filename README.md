@@ -13,7 +13,6 @@ Below are additional packages needed to run the code.
 
 `Keras: 2.2.4`  
 `Matplotlib: 3.0.1`  
-`Numpy: 1.15.4 (Should be part of Anaconda)`  
 `Python: 3.6.7`  
 `Scikit-learn: 0.20.1`  
 `Tensorboard: 1.12.0`  
