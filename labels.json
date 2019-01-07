@@ -1,9 +1,9 @@
 {
-    "<3-dots>": 6,
-    "<pad>": 0,
+    "<na>": 1,
+    "<comma>": 2,
+    "<period>": 3,
     "<question>": 4,
     "<exclaim>": 5,
-    "<na>": 1,
-    "<period>": 3,
-    "<comma>": 2
+    "<3-dots>": 6,
+    "<pad>": 0
 }
