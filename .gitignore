@@ -1,11 +1,5 @@
 __pycache__
 .vscode
-tf_logs/*
-glove.6B.300d.txt
-/data/processed/train.word.txt
-/data/processed/train.label.txt
 *.vec
-test.py
 *.csv
-*.h5
-test.ipynb
+
