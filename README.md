@@ -15,7 +15,6 @@ Keras: 2.2.4
 Matplotlib: 3.0.1  
 Python: 3.6.7  
 Scikit-learn: 0.20.1  
-Tensorboard: 1.12.0  
 Tensorflow-gpu: 1.12.0
 Git lfs
 ```
@@ -28,10 +27,6 @@ Git lfs
 |   └───raw
 ├───images
 ├───models
-└───tf_logs
-    ├───baseline_model
-    ├───mge_model
-    └───ted_data_model
 ```
 
 #### Folders
@@ -41,7 +36,6 @@ Git lfs
 * **images:** Contains the image files used for the repo
 * **models:** Conatins the saved/trained model files
 * **results**: Contains the screenshots of the model results (Pure BiLSTM, CNN+BiLSTM) performed on different datasets
-* **tf_logs:** Contains the training log files of each model type which can be viewed using tensorboard `tensorbard --logdir=./`
 
 #### Files:
 * **Hybrid PoS Tagger Model.ipynb:** Notebook containing all codes required to run the project. Further descriptions are provided within to explain each code block
@@ -66,10 +60,6 @@ Image below displays the architecture for the Hybrid model
 ##### Baseline BiLSTM
 ![Confusion matrix](./images/baseline_cm.jpg)
 ![Classification report](./images/baseline_cr.jpg)
-
-##### Comparsion using MGE dataset with Hybrid model
-![Confusion matrix](./images/mge_cm.jpg)
-![Classification report](./images/mge_cr.jpg)
 
 ### Future/Possible Improvements:
 * Increase dataset size
